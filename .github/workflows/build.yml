@@ -1,22 +1,35 @@
-- name: Build IPK
-  run: |
-    ls -la
-    PKG_NAME="luci-theme-argon-opentopd"
-    PKG_VERSION="1.0.0"
-    mkdir -p ipk-build/CONTROL
-    mkdir -p ipk-build/www
-    cp -r htdocs/. ipk-build/www/
-    cat > ipk-build/CONTROL/control << CONTROL_EOF
-    Package: $PKG_NAME
-    Version: $PKG_VERSION
-    Architecture: all
-    Maintainer: zzcsz-de
-    Description: Argon Opentopd Theme for LuCI
-    CONTROL_EOF
-    cd ipk-build
-    tar -czf data.tar.gz www
-    tar -czf control.tar.gz CONTROL
-    echo "2.0" > debian-binary
-    ar r ../${PKG_NAME}_${PKG_VERSION}_all.ipk debian-binary control.tar.gz data.tar.gz
-    cd ..
-    ls -lh *.ipk
+name: Build IPK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build IPK
+        run: |
+          ls -la
+          PKG_NAME="luci-theme-argon-opentopd"
+          PKG_VERSION="1.0.0"
+          mkdir -p ipk-build/CONTROL
+          mkdir -p ipk-build/www
+          cp -r htdocs/. ipk-build/www/
+          printf 'Package: %s\nVersion: %s\nArchitecture: all\nMaintainer: zzcsz-de\nDescription: Argon Opentopd Theme for LuCI\n' "$PKG_NAME" "$PKG_VERSION" > ipk-build/CONTROL/control
+          cd ipk-build
+          tar -czf data.tar.gz www
+          tar -czf control.tar.gz CONTROL
+          echo "2.0" > debian-binary
+          ar r ../${PKG_NAME}_${PKG_VERSION}_all.ipk debian-binary control.tar.gz data.tar.gz
+          cd ..
+          ls -lh *.ipk
+
+      - name: Upload IPK
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-theme-argon-opentopd
+          path: "*.ipk"
